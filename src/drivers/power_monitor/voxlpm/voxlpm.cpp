@@ -54,7 +54,7 @@ VOXLPM::VOXLPM(const I2CSPIDriverConfig &config) :
 	_sample_perf(perf_alloc(PC_ELAPSED, MODULE_NAME": sample")),
 	_comms_errors(perf_alloc(PC_COUNT, MODULE_NAME": comms_errors")),
 	_ch_type((VOXLPM_CH_TYPE)config.custom1),
-	_battery(1, this, _meas_interval_us)
+	_battery(1, this, _meas_interval_us, battery_status_s::BATTERY_SOURCE_POWER_MODULE)
 {
 }
 
@@ -71,13 +71,9 @@ VOXLPM::init()
 	int ret = PX4_ERROR;
 
 	if (_ch_type == VOXLPM_CH_TYPE_VBATT) {
+		_battery.setConnected(false);
 		_battery.updateBatteryStatus(
-			hrt_absolute_time(),
-			0.0,
-			0.0,
-			false,
-			battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-			0
+			hrt_absolute_time()
 		);
 	}
 
@@ -347,12 +343,10 @@ VOXLPM::measure()
 		case VOXLPM_CH_TYPE_VBATT: {
 				_actuators_sub.copy(&_actuator_controls);
 
-				_battery.updateBatteryStatus(tnow,
-							     _voltage,
-							     _amperage,
-							     true,
-							     battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-							     0);
+				_battery.setConnected(true);
+				_battery.updateVoltage(_voltage);
+				_battery.updateCurrent(_amperage);
+				_battery.updateBatteryStatus(tnow);
 			}
 
 		// fallthrough
@@ -375,12 +369,8 @@ VOXLPM::measure()
 
 		switch (_ch_type) {
 		case VOXLPM_CH_TYPE_VBATT: {
-				_battery.updateBatteryStatus(tnow,
-							     0.0,
-							     0.0,
-							     true,
-							     battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-							     0);
+				_battery.setConnected(true);
+				_battery.updateBatteryStatus(tnow);
 			}
 			break;
 

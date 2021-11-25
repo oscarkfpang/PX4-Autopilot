@@ -137,9 +137,9 @@ private:
 BatteryStatus::BatteryStatus() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::hp_default),
-	_battery1(1, this, SAMPLE_INTERVAL_US),
+	_battery1(1, this, SAMPLE_INTERVAL_US, battery_status_s::BATTERY_SOURCE_POWER_MODULE, 0),
 #if BOARD_NUMBER_BRICKS > 1
-	_battery2(2, this, SAMPLE_INTERVAL_US),
+	_battery2(2, this, SAMPLE_INTERVAL_US, battery_status_s::BATTERY_SOURCE_POWER_MODULE, 1),
 #endif
 	_loop_perf(perf_alloc(PC_ELAPSED, MODULE_NAME))
 {
@@ -221,9 +221,7 @@ BatteryStatus::adc_poll()
 			_analogBatteries[b]->updateBatteryStatusADC(
 				hrt_absolute_time(),
 				bat_voltage_adc_readings[b],
-				bat_current_adc_readings[b],
-				battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-				b
+				bat_current_adc_readings[b]
 			);
 		}
 	}

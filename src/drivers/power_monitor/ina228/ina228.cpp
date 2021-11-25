@@ -49,7 +49,7 @@ INA228::INA228(const I2CSPIDriverConfig &config, int battery_index) :
 	_comms_errors(perf_alloc(PC_COUNT, "ina228_com_err")),
 	_collection_errors(perf_alloc(PC_COUNT, "ina228_collection_err")),
 	_measure_errors(perf_alloc(PC_COUNT, "ina228_measurement_err")),
-	_battery(battery_index, this, INA228_SAMPLE_INTERVAL_US)
+	_battery(battery_index, this, INA228_SAMPLE_INTERVAL_US, battery_status_s::BATTERY_SOURCE_POWER_MODULE)
 {
 	float fvalue = MAX_CURRENT;
 	_max_current = fvalue;
@@ -85,13 +85,9 @@ INA228::INA228(const I2CSPIDriverConfig &config, int battery_index) :
 	_power_lsb = 3.2f * _current_lsb;
 
 	// We need to publish immediately, to guarantee that the first instance of the driver publishes to uORB instance 0
+	_battery.setConnected(false);
 	_battery.updateBatteryStatus(
-		hrt_absolute_time(),
-		0.0,
-		0.0,
-		false,
-		battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-		0
+		hrt_absolute_time()
 	);
 }
 
@@ -313,13 +309,11 @@ INA228::collect()
 
 	_actuators_sub.copy(&_actuator_controls);
 
+	_battery.setConnected(success);
+	_battery.updateVoltage(static_cast<float>(_bus_voltage * INA228_VSCALE));
+	_battery.updateCurrent(static_cast<float>(_current * _current_lsb));
 	_battery.updateBatteryStatus(
-		hrt_absolute_time(),
-		(float) _bus_voltage * INA228_VSCALE,
-		(float) _current * _current_lsb,
-		success,
-		battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-		0
+		hrt_absolute_time()
 	);
 
 	perf_end(_sample_perf);
@@ -383,13 +377,9 @@ INA228::RunImpl()
 		ScheduleDelayed(INA228_CONVERSION_INTERVAL);
 
 	} else {
+		_battery.setConnected(false);
 		_battery.updateBatteryStatus(
-			hrt_absolute_time(),
-			0.0f,
-			0.0f,
-			false,
-			battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-			0
+			hrt_absolute_time()
 		);
 
 		if (init() != PX4_OK) {

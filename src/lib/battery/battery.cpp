@@ -47,9 +47,10 @@
 
 using namespace time_literals;
 
-Battery::Battery(int index, ModuleParams *parent, const int sample_interval_us) :
+Battery::Battery(int index, ModuleParams *parent, const int sample_interval_us, const uint8_t source) :
 	ModuleParams(parent),
-	_index(index < 1 || index > 9 ? 1 : index)
+	_index(index < 1 || index > 9 ? 1 : index),
+	_source(source)
 {
 	const float expected_filter_dt = static_cast<float>(sample_interval_us) / 1_s;
 	_voltage_filter_v.setParameters(expected_filter_dt, 1.f);
@@ -96,52 +97,68 @@ Battery::Battery(int index, ModuleParams *parent, const int sample_interval_us) 
 	updateParams();
 }
 
-void Battery::updateBatteryStatus(const hrt_abstime &timestamp, float voltage_v, float current_a, bool connected,
-				  int source, int priority)
+void Battery::updateVoltage(const float voltage_v)
 {
-	if (!_battery_initialized) {
-		_voltage_filter_v.reset(voltage_v);
-		_current_filter_a.reset(current_a);
+	_voltage_v = voltage_v;
+	_voltage_filter_v.update(voltage_v);
+}
+
+void Battery::updateCurrent(const float current_a)
+{
+	_current_a = current_a;
+	_current_filter_a.update(current_a);
+}
+
+void Battery::updateBatteryStatus(const hrt_abstime &timestamp)
+{
+	if (_voltage_v > 2.1f) {
+		_battery_initialized = true;
 	}
 
-	_voltage_filter_v.update(voltage_v);
-	_current_filter_a.update(current_a);
-	sumDischarged(timestamp, current_a);
-	estimateStateOfCharge(_voltage_filter_v.getState(), _current_filter_a.getState());
+	if (!_battery_initialized) {
+		_voltage_filter_v.reset(_voltage_v);
+		_current_filter_a.reset(_current_a);
+		_connected = false;
+	}
+
+	sumDischarged(timestamp, _current_a);
+	estimateStateOfCharge(_voltage_filter_v.getState(), _current_filter_a.getState(), _throttle_filter.getState());
 	computeScale();
 
-	if (connected && _battery_initialized) {
+	if (_connected && _battery_initialized) {
 		_warning = determineWarning(_state_of_charge);
 	}
 
-	if (_voltage_filter_v.getState() > 2.1f) {
-		_battery_initialized = true;
+	battery_status_s battery_status{getBatteryStatus()};
+	publishBatteryStatus(battery_status);
+}
 
-	} else {
-		connected = false;
-	}
-
+battery_status_s Battery::getBatteryStatus()
+{
 	battery_status_s battery_status{};
-	battery_status.voltage_v = voltage_v;
+	battery_status.voltage_v = _voltage_v;
 	battery_status.voltage_filtered_v = _voltage_filter_v.getState();
-	battery_status.current_a = current_a;
+	battery_status.current_a = _current_a;
 	battery_status.current_filtered_a = _current_filter_a.getState();
 	battery_status.current_average_a = _current_average_filter_a.getState();
 	battery_status.discharged_mah = _discharged_mah;
 	battery_status.remaining = _state_of_charge;
 	battery_status.scale = _scale;
-	battery_status.time_remaining_s = computeRemainingTime(current_a);
+	battery_status.time_remaining_s = computeRemainingTime(_current_a);
 	battery_status.temperature = NAN;
 	// Publish at least one cell such that the total voltage gets into MAVLink BATTERY_STATUS
 	battery_status.cell_count = _params.n_cells;
-	battery_status.connected = connected;
-	battery_status.source = source;
-	battery_status.priority = priority;
+	battery_status.connected = _connected;
+	battery_status.source = _source;
+	battery_status.priority = _priority;
 	battery_status.capacity = _params.capacity > 0.f ? static_cast<uint16_t>(_params.capacity) : 0;
 	battery_status.id = static_cast<uint8_t>(_index);
 	battery_status.warning = _warning;
+}
 
-	if (source == _params.source) {
+void Battery::publishBatteryStatus(battery_status_s &battery_status)
+{
+	if (_source == _params.source) {
 		battery_status.timestamp = hrt_absolute_time();
 		_battery_status_pub.publish(battery_status);
 	}
