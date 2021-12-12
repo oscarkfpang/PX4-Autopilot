@@ -244,6 +244,15 @@ MulticopterAttitudeControl::Run()
 
 	if (_vehicle_attitude_sub.update(&v_att)) {
 
+		PX4_INFO("v_att (x, y, z):\t%8.4f\t%8.4f\t%8.4f",
+					 (double)local_pos.x,
+					 (double)local_pos.y,
+					 (double)local_pos.z);
+		PX4_INFO("local_pos (vx, vy, vz):\t%8.4f\t%8.4f\t%8.4f",
+					 (double)local_pos.vx,
+					 (double)local_pos.vy,
+					 (double)local_pos.vz);
+
 		// Check for new attitude setpoint
 		if (_vehicle_attitude_setpoint_sub.updated()) {
 			vehicle_attitude_setpoint_s vehicle_attitude_setpoint;

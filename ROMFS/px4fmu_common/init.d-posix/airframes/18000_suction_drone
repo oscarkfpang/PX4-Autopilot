@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# @name Suction Drone SITL
+#
+# @type Quadrotor Wide
+#
+# @maintainer Oscar Pang <k.pang@imperial.ac.uk>
+#
+
+. ${R}etc/init.d/rc.mc_defaults
+
+set MIXER quad_w

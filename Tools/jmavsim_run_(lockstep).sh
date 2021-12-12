@@ -62,6 +62,4 @@ fi
 ant create_run_jar copy_res
 cd out/production
 
-echo "arguments: "
-echo $extra_args
 java -XX:GCTimeRatio=20 -Djava.ext.dirs= -jar jmavsim_run.jar $device $extra_args

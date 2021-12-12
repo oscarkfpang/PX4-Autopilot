@@ -166,6 +166,7 @@ set(models
 	solo
 	standard_vtol
 	standard_vtol_drop
+	suction_drone
 	tailsitter
 	techpod
 	tiltrotor
