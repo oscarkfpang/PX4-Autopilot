@@ -79,6 +79,11 @@ protected:
 	float _get_max_altitude() override;
 
 	void _set_hysteresis_factor(const int factor) override;
+
+	// new method defined for getting suction status params
+	bool _get_suction_landed() { return _suction_landed; }
+	bool _get_suction_perched() { return _suction_perched; }
+
 private:
 
 	float _get_gnd_effect_altitude();
@@ -137,6 +142,9 @@ private:
 	bool _close_to_ground_or_skipped_check{false};
 	bool _below_gnd_effect_hgt{false};	///< vehicle height above ground is below height where ground effect occurs
 
+	bool _suction_landed{false};            ///< vehicle has landed on vertical surface
+	bool _suction_perched{false};           ///< vehicle suction pump is on and attached to vertical surface
+
 	DEFINE_PARAMETERS_CUSTOM_PARENT(
 		LandDetector,
 		(ParamFloat<px4::params::LNDMC_TRIG_TIME>)   _param_lndmc_trig_time,
@@ -144,8 +152,12 @@ private:
 		(ParamFloat<px4::params::LNDMC_ROT_MAX>)    _param_lndmc_rot_max,
 		(ParamFloat<px4::params::LNDMC_XY_VEL_MAX>) _param_lndmc_xy_vel_max,
 		(ParamFloat<px4::params::LNDMC_Z_VEL_MAX>)  _param_lndmc_z_vel_max,
-		(ParamFloat<px4::params::LNDMC_ALT_GND>)    _param_lndmc_alt_gnd_effect
+		(ParamFloat<px4::params::LNDMC_ALT_GND>)    _param_lndmc_alt_gnd_effect,
+		(ParamInt<px4::params::SUCTION_IS_PERCH>)   _param_suction_is_perch,
+		(ParamInt<px4::params::SUCTION_IS_LAND>) _param_suction_is_land
+
 	);
+
 };
 
 } // namespace land_detector

@@ -227,11 +227,23 @@ bool MulticopterLandDetector::_get_ground_contact_state()
 		_in_descend = false;
 	}
 
+
 	// if there is no distance to ground estimate available then don't enforce using it.
 	// if a distance to the ground estimate is generally available (_dist_bottom_is_observable=true), then
 	// we already increased the hysteresis for the land detection states in order to reduce the chance of false positives.
 	const bool skip_close_to_ground_check = !_dist_bottom_is_observable || !_vehicle_local_position.dist_bottom_valid;
 	_close_to_ground_or_skipped_check = _is_close_to_ground() || skip_close_to_ground_check;
+
+        // override the _get_ground_contact_state checking under suction conditions
+	// TODO: add more checking conditions besides relying on 2 parameters
+	if (_param_suction_is_perch.get() && _param_suction_is_land.get()){
+		_in_descend = false;
+		_close_to_ground_or_skipped_check = true;
+		_horizontal_movement = false;
+		_vertical_movement = false;
+		//PX4_INFO("suction activated!");
+		return true;
+	}
 
 	// When not armed, consider to have ground-contact
 	if (!_armed) {
@@ -276,6 +288,15 @@ bool MulticopterLandDetector::_get_maybe_landed_state()
 		return false;
 	}
 
+
+        // override the _get_maybe_landed_state checking under suction conditions
+	// detect the min_thrust time over 5 sec (can be tuned smaller if needed)
+	// TODO: add more checking conditions besides relying on 2 parameters
+	if (_param_suction_is_perch.get() && _param_suction_is_land.get()){
+		bool check = (_min_thrust_start > 0) && ((time_now_us - _min_thrust_start) > 5_s);
+		PX4_INFO("Check bool = :\t%2.4d", check);
+		return check;
+	}
 
 	float landThresholdFactor = 1.f;
 
@@ -345,6 +366,14 @@ float MulticopterLandDetector::_get_gnd_effect_altitude()
 
 bool MulticopterLandDetector::_get_ground_effect_state()
 {
+        // override the _get_ground_effect_state checking under suction conditions
+	// return true if two suction params are true since no need ground effect checking
+	// TODO: add more checking conditions besides relying on 2 parameters
+	if (_param_suction_is_perch.get() && _param_suction_is_land.get()){
+		return ( _in_descend  ||  _takeoff_state == takeoff_status_s::TAKEOFF_STATE_FLIGHT ||
+	       _takeoff_state == takeoff_status_s::TAKEOFF_STATE_RAMPUP );
+	}
+
 	return (_in_descend && !_horizontal_movement) ||
 	       (_below_gnd_effect_hgt && _takeoff_state == takeoff_status_s::TAKEOFF_STATE_FLIGHT) ||
 	       _takeoff_state == takeoff_status_s::TAKEOFF_STATE_RAMPUP;

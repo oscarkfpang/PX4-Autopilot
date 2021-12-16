@@ -114,3 +114,28 @@ PARAM_DEFINE_FLOAT(LNDMC_ALT_MAX, -1.0f);
  *
  */
 PARAM_DEFINE_FLOAT(LNDMC_ALT_GND, -1.0f);
+
+/**
+ * Drone is perched to the vertical surface
+ *
+ * Indicate whether the drone is perched to the surface with suction pump
+ * 0: Perch is False (Not Successful)
+ * 1: Perch is True (Successful)
+ *
+ * @group Suction
+ * @boolean
+ */
+PARAM_DEFINE_INT32(SUCTION_IS_PERCH, 0);
+
+/**
+ * Drone is landed to the vertical surface
+ *
+ * Indicate whether there is contact to the vertical surface
+ * The param is triggered by the contact sensor on the landing gear
+ * 0: Not contact
+ * 1: Contact
+ *
+ * @group Suction
+ * @boolean
+ */
+PARAM_DEFINE_INT32(SUCTION_IS_LAND, 0);
