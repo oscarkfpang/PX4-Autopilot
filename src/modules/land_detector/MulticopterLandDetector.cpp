@@ -241,7 +241,7 @@ bool MulticopterLandDetector::_get_ground_contact_state()
 		_close_to_ground_or_skipped_check = true;
 		_horizontal_movement = false;
 		_vertical_movement = false;
-		//PX4_INFO("suction activated!");
+		PX4_WARN("ground_contact true");
 		return true;
 	}
 
@@ -294,7 +294,7 @@ bool MulticopterLandDetector::_get_maybe_landed_state()
 	// TODO: add more checking conditions besides relying on 2 parameters
 	if (_param_suction_is_perch.get() && _param_suction_is_land.get()){
 		bool check = (_min_thrust_start > 0) && ((time_now_us - _min_thrust_start) > 5_s);
-		PX4_INFO("Check bool = :\t%2.4d", check);
+		PX4_WARN("Check bool = :\t%2.4d", check);
 		return check;
 	}
 
