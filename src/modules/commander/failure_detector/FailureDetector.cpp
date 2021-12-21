@@ -102,9 +102,17 @@ void FailureDetector::updateAttitudeStatus()
 		_roll_failure_hysteresis.set_state_and_update(roll_status, time_now);
 		_pitch_failure_hysteresis.set_state_and_update(pitch_status, time_now);
 
-		// Update status
-		_status.flags.roll = _roll_failure_hysteresis.get_state();
-		_status.flags.pitch = _pitch_failure_hysteresis.get_state();
+		if (_param_suction_is_perch.get() && _param_suction_is_land.get()){
+			_status.flags.roll = false;
+			_status.flags.pitch = false;
+			_roll_failure_hysteresis.set_state_and_update(false, time_now);
+			_pitch_failure_hysteresis.set_state_and_update(false, time_now);
+			PX4_WARN("Overriding attitude check in pre-arm!");
+		} else {
+			// Update status
+			_status.flags.roll = _roll_failure_hysteresis.get_state();
+			_status.flags.pitch = _pitch_failure_hysteresis.get_state();
+		}
 	}
 }
 

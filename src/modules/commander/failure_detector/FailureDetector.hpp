@@ -118,6 +118,8 @@ private:
 		(ParamBool<px4::params::FD_EXT_ATS_EN>) _param_fd_ext_ats_en,
 		(ParamInt<px4::params::FD_EXT_ATS_TRIG>) _param_fd_ext_ats_trig,
 		(ParamInt<px4::params::FD_ESCS_EN>) _param_escs_en,
-		(ParamInt<px4::params::FD_IMB_PROP_THR>) _param_fd_imb_prop_thr
+		(ParamInt<px4::params::FD_IMB_PROP_THR>) _param_fd_imb_prop_thr,
+		(ParamInt<px4::params::SUCTION_IS_PERCH>)   _param_suction_is_perch,
+		(ParamInt<px4::params::SUCTION_IS_LAND>) _param_suction_is_land
 	)
 };
