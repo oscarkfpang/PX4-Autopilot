@@ -54,7 +54,7 @@ from threading import Thread
 from tf.transformations import quaternion_from_euler
 
 
-class MavrosOffboardPosctlTest(MavrosTestCommon):
+class MavrosOffboardSuctionTest(MavrosTestCommon):
     """
     Tests flying a path in offboard control by sending position setpoints
     via MAVROS.
@@ -65,7 +65,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
     """
 
     def setUp(self):
-        super(MavrosOffboardPosctlTest, self).setUp()
+        super(MavrosOffboardSuctionTest, self).setUp()
 
         self.pos = PoseStamped()
         self.radius = 1
@@ -79,7 +79,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         self.pos_thread.start()
 
     def tearDown(self):
-        super(MavrosOffboardPosctlTest, self).tearDown()
+        super(MavrosOffboardSuctionTest, self).tearDown()
 
     #
     # Helper methods
@@ -152,6 +152,39 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
                    self.local_position.pose.position.y,
                    self.local_position.pose.position.z, timeout)))
 
+    # define a new method similar to the original wait_for_mission for real-life operation
+    # wait until all mavros topics to be ready
+    def wait_for_mission_topics(self, timeout):
+        """wait for mavros topics to be ready, make sure we're getting topic info
+        from all topics by checking dictionary of flag values set in callbacks,
+        timeout(int): seconds"""
+        rospy.loginfo("waiting for subscribed topics to be ready")
+        loop_freq = 1  # Hz
+        rate = rospy.Rate(loop_freq)
+        operation_ready = False
+        rospy.loginfo("All topics?= {0}".format(self.sub_topics_ready['alt']))
+        rospy.loginfo("All topics?= {0}".format(self.sub_topics_ready['ext_state']))
+        rospy.loginfo("All topics?= {0}".format(self.sub_topics_ready['imu']))
+        rospy.loginfo("All topics?= {0}".format(self.sub_topics_ready['state']))
+        for i in xrange(timeout * loop_freq):
+            topics = [self.sub_topics_ready['alt'], self.sub_topics_ready['ext_state'], self.sub_topics_ready['imu'],
+                    self.sub_topics_ready['state']]
+            rospy.loginfo("All topics?= {0}".format(topics))
+            if all(topics):
+                operation_ready = True
+                rospy.loginfo("Mavros topics ready | seconds: {0} of {1}".
+                              format(i / loop_freq, timeout))
+                break
+
+            try:
+                rate.sleep()
+            except rospy.ROSException as e:
+                self.fail(e)
+
+        self.assertTrue(operation_ready, (
+            "failed to hear from all subscribed mavros topics | topic ready flags: {0} | timeout(seconds): {1}".
+            format(self.sub_topics_ready, timeout)))
+
     #
     # Test method
     #
@@ -159,7 +192,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         """Test offboard position control"""
 
         # make sure the simulation is ready to start the mission
-        self.wait_for_topics(60)
+        self.wait_for_mission_topics(60)
         self.wait_for_landed_state(mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND,
                                    10, -1)
 
@@ -171,7 +204,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
         self.set_arm(True, 5)
 
         rospy.loginfo("run mission")
-        positions = ((0, 0, 0), (0, 0, 1.8), (1, 0, 1.8), (1, 1.5, 1.8), (0, 1.5, 1.8), (0, 0, 0))
+        positions = ((0, 0, 0) , (0, 0, 0.1) ) #, (1, 0, 1.8), (1, 1.5, 1.8), (0, 1.5, 1.8), (0, 0, 0))
 
         for i in xrange(len(positions)):
             self.reach_position(positions[i][0], positions[i][1],
@@ -187,5 +220,5 @@ if __name__ == '__main__':
     import rostest
     rospy.init_node('test_node', anonymous=True)
 
-    rostest.rosrun(PKG, 'mavros_offboard_posctl_test',
-                   MavrosOffboardPosctlTest)
+    rostest.rosrun(PKG, 'mavros_offboard_suction_test',
+                   MavrosOffboardSuctionTest)

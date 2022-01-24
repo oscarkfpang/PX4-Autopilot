@@ -235,12 +235,13 @@ bool MulticopterLandDetector::_get_ground_contact_state()
 	_close_to_ground_or_skipped_check = _is_close_to_ground() || skip_close_to_ground_check;
 
         // override the _get_ground_contact_state checking under suction conditions
-	// TODO: add more checking conditions besides relying on 2 parameters
-	if (_param_suction_is_perch.get() && _param_suction_is_land.get()){
+	// 24 Jan 2022: Added checking of _has_low_throttle as throttle will be lowered gradually to zero during wall perching
+	if (_param_suction_is_perch.get() && _param_suction_is_land.get() && _has_low_throttle){
 		_in_descend = false;
 		_close_to_ground_or_skipped_check = true;
 		_horizontal_movement = false;
 		_vertical_movement = false;
+		_below_gnd_effect_hgt = true;
 		PX4_WARN("ground_contact true");
 		return true;
 	}
