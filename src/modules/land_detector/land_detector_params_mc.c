@@ -100,3 +100,29 @@ PARAM_DEFINE_FLOAT(LNDMC_ROT_MAX, 20.0f);
  *
  */
 PARAM_DEFINE_FLOAT(LNDMC_ALT_GND, 2.f);
+
+/**
+ * Drone is perched to the vertical wall
+ *
+ * Indicate whether the drone is perched to a vertical surface
+ * 0: Perch is False (Not Successful)
+ * 1: Perch is True (Successful)
+ *
+ * @group Perching
+ * @boolean
+ */
+PARAM_DEFINE_INT32(VERTICAL_PERCH, 0);
+
+/**
+ * Drone is landed to the vertical surface
+ *
+ * Indicate whether the drone is landed on a vertical surface
+ * The param is triggered by the contact sensor on the landing gear
+ * 0: Not contact
+ * 1: Contact
+ *
+ * @group Perching
+ * @boolean
+ */
+PARAM_DEFINE_INT32(VERTICAL_LAND, 0);
+

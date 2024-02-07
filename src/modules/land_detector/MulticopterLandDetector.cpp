@@ -245,6 +245,21 @@ bool MulticopterLandDetector::_get_ground_contact_state()
 	const bool skip_close_to_ground_check = !_dist_bottom_is_observable || !_vehicle_local_position.dist_bottom_valid;
 	_close_to_ground_or_skipped_check = _is_close_to_ground() || skip_close_to_ground_check;
 
+
+        // override the _get_ground_contact_state checking under vertical perching conditions
+	// Added checking of _has_low_throttle as throttle will be lowered gradually to zero during wall perching
+	// TODO: add _is_close_to_ground check as bottom-facing range sensor is installed on the drone
+	if (_param_vertical_perch.get() && _param_vertical_land.get() && _has_low_throttle){
+		_in_descend = false;
+		_close_to_ground_or_skipped_check = true;
+		_horizontal_movement = false;
+		_vertical_movement = false;
+		_below_gnd_effect_hgt = true;
+		PX4_WARN("detect vertical_land true");
+		return true;
+	}
+
+
 	// TODO: we need an accelerometer based check for vertical movement for flying without GPS
 	return !_armed ||
 	       (_close_to_ground_or_skipped_check && ground_contact
@@ -284,6 +299,17 @@ bool MulticopterLandDetector::_get_maybe_landed_state()
 	const bool vertical_velocity_valid = _vehicle_local_position.v_z_valid;
 	const bool vertical_estimate = local_position_updated && vertical_velocity_valid;
 
+
+        // override the _get_maybe_landed_state checking under vertical perching conditions
+	// detect the minimum_thrust_now and _rotational_movement.
+	// other detection e.g. _freefall_hysteresis or vertical_estimate may not apply.
+	if (_param_vertical_perch.get() && _param_vertical_land.get()){
+		bool check = !_armed || (minimum_thrust_now && !_rotational_movement);
+		PX4_WARN("_get_maybe_landed_state Check = :\t%2.4d", check);
+		return check;
+	}	
+
+
 	return !_armed ||
 	       (minimum_thrust_now && !_freefall_hysteresis.get_state() && !_rotational_movement
 		&& ((vertical_estimate && _ground_contact_hysteresis.get_state())
@@ -298,6 +324,14 @@ bool MulticopterLandDetector::_get_landed_state()
 
 bool MulticopterLandDetector::_get_ground_effect_state()
 {
+
+        // override the _get_ground_effect_state checking under vertical perching conditions
+	// return true if two vertical landing params are true since no need ground effect checking
+	if (_param_vertical_perch.get() && _param_vertical_land.get()){
+		return (  _takeoff_state == takeoff_status_s::TAKEOFF_STATE_FLIGHT ||
+	       _takeoff_state == takeoff_status_s::TAKEOFF_STATE_RAMPUP );
+	}
+
 	return (_in_descend && !_horizontal_movement) ||
 	       (_below_gnd_effect_hgt && _takeoff_state == takeoff_status_s::TAKEOFF_STATE_FLIGHT) ||
 	       _takeoff_state == takeoff_status_s::TAKEOFF_STATE_RAMPUP;

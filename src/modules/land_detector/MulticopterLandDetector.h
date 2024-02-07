@@ -78,6 +78,11 @@ protected:
 	bool _get_close_to_ground_or_skipped_check() override { return _close_to_ground_or_skipped_check; }
 
 	void _set_hysteresis_factor(const int factor) override;
+	
+	// new method defined for getting suction status params
+	bool _get_vertical_landed() { return _vertical_landed; }
+	bool _get_vertical_perched() { return _vertical_perched; }
+	
 private:
 	bool _is_close_to_ground();
 
@@ -132,13 +137,18 @@ private:
 	bool _close_to_ground_or_skipped_check{false};
 	bool _below_gnd_effect_hgt{false};	///< vehicle height above ground is below height where ground effect occurs
 
+	bool _vertical_perched{false};           ///< vehicle is perched on a vertical surface
+	bool _vertical_landed{false};            ///< vehicle has landed on a vertical surface
+
 	DEFINE_PARAMETERS_CUSTOM_PARENT(
 		LandDetector,
 		(ParamFloat<px4::params::LNDMC_TRIG_TIME>)   _param_lndmc_trig_time,
 		(ParamFloat<px4::params::LNDMC_ROT_MAX>)    _param_lndmc_rot_max,
 		(ParamFloat<px4::params::LNDMC_XY_VEL_MAX>) _param_lndmc_xy_vel_max,
 		(ParamFloat<px4::params::LNDMC_Z_VEL_MAX>)  _param_lndmc_z_vel_max,
-		(ParamFloat<px4::params::LNDMC_ALT_GND>)    _param_lndmc_alt_gnd_effect
+		(ParamFloat<px4::params::LNDMC_ALT_GND>)    _param_lndmc_alt_gnd_effect,
+		(ParamBool<px4::params::VERTICAL_PERCH>)   _param_vertical_perch,
+		(ParamBool<px4::params::VERTICAL_LAND>) _param_vertical_land
 	);
 };
 

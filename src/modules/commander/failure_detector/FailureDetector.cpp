@@ -248,9 +248,17 @@ void FailureDetector::updateAttitudeStatus(const vehicle_status_s &vehicle_statu
 		_roll_failure_hysteresis.set_state_and_update(roll_status, time_now);
 		_pitch_failure_hysteresis.set_state_and_update(pitch_status, time_now);
 
-		// Update status
-		_status.flags.roll = _roll_failure_hysteresis.get_state();
-		_status.flags.pitch = _pitch_failure_hysteresis.get_state();
+		if (_param_vertical_perch.get() && _param_vertical_land.get()){
+			_status.flags.roll = false;
+			_status.flags.pitch = false;
+			_roll_failure_hysteresis.set_state_and_update(false, time_now);
+			_pitch_failure_hysteresis.set_state_and_update(false, time_now);
+			PX4_WARN("Overriding attitude check in pre-arm for vertical perching!");
+		} else{
+			// Update status
+			_status.flags.roll = _roll_failure_hysteresis.get_state();
+			_status.flags.pitch = _pitch_failure_hysteresis.get_state();
+		}
 	}
 }
 

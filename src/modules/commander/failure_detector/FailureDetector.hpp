@@ -155,6 +155,8 @@ private:
 		(ParamBool<px4::params::FD_ACT_EN>) _param_fd_actuator_en,
 		(ParamFloat<px4::params::FD_ACT_MOT_THR>) _param_fd_motor_throttle_thres,
 		(ParamFloat<px4::params::FD_ACT_MOT_C2T>) _param_fd_motor_current2throttle_thres,
-		(ParamInt<px4::params::FD_ACT_MOT_TOUT>) _param_fd_motor_time_thres
+		(ParamInt<px4::params::FD_ACT_MOT_TOUT>) _param_fd_motor_time_thres,
+		(ParamBool<px4::params::VERTICAL_PERCH>)  _param_vertical_perch,
+		(ParamBool<px4::params::VERTICAL_LAND>) _param_vertical_land
 	)
 };
